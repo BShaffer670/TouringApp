@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.LocaleList;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,11 +43,21 @@ public class MapsActivity extends AppCompatActivity {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
-    TextView tv_lat, tv_lon, tv_altitude, tv_accuracy, tv_speed, tv_sensor, tv_updates, tv_address;
+    TextView tv_lat, tv_lon, tv_altitude, tv_accuracy, tv_speed, tv_sensor, tv_updates, tv_address, tv_numMarkers;
     Switch sw_locationsupdates, sw_gps;
+    Button btn_CheckIn, btn_TourStops;
 
     //If true then gps services are active
     boolean usingGPS = false;
+
+    //current location
+    Location currentLocation;
+
+    // List that contains stops for the tour
+    List<Location> stopsInTour;
+    // 2-D List of all stops in all tours (may not need 2D list, List<Strings> may suffice) [List should be migrated to database to reduce storage usage
+    List<List<Location>> allTours;
+
 
     //config file for all FusedLocationProviderClient settings
     LocationRequest locationRequest;
@@ -72,6 +83,10 @@ public class MapsActivity extends AppCompatActivity {
         tv_sensor = findViewById(R.id.tv_sensor);
         tv_updates = findViewById(R.id.tv_updates);
         tv_address = findViewById(R.id.tv_address);
+        tv_numMarkers = findViewById(R.id.tv_numMarkers);
+
+        btn_CheckIn = findViewById(R.id.btn_CheckIn);
+        btn_TourStops = findViewById(R.id.btn_TourStops);
 
         sw_gps = findViewById(R.id.sw_gps);
         sw_locationsupdates = findViewById(R.id.sw_locationsupdates);
@@ -91,9 +106,27 @@ public class MapsActivity extends AppCompatActivity {
                 super.onLocationResult(locationResult);
 
                 //Save GPS location
-                updateUIValues(locationResult.getLastLocation());
+                if(locationResult.getLastLocation() != null) {
+                    updateUIValues(locationResult.getLastLocation());
+                }
+                else{
+                    updateGPS();
+                }
             }
         };
+
+        btn_CheckIn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // gets GPS location (probably needs to be in a different class)
+
+                // adds a marker to the global list( Needs to be changed to change color of tour marker
+                MyApplication myApplication = (MyApplication)getApplicationContext();
+                stopsInTour = myApplication.getMyLocations();
+                stopsInTour.add(currentLocation);
+                updateGPS();
+            }
+        });
 
         sw_gps.setOnClickListener(new View.OnClickListener() {
 
@@ -183,6 +216,7 @@ public class MapsActivity extends AppCompatActivity {
                 public void onSuccess(Location location) {
                     // Put location values into the UI components
                     updateUIValues(location);
+                    currentLocation = location;
                 }
             });
         }
@@ -223,6 +257,13 @@ public class MapsActivity extends AppCompatActivity {
         catch(Exception exception){
             tv_address.setText("Unable to get street address");
         }
+
+        MyApplication myApplication = (MyApplication)getApplicationContext();
+        stopsInTour = myApplication.getMyLocations();
+        //Show number of saved waypoints (will be changed to show number of visited tours)
+
+        tv_numMarkers.setText(Integer.toString(stopsInTour.size()));
+
     }
 
     /**

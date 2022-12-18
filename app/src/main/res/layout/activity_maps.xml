@@ -100,10 +100,10 @@
         android:id="@+id/tv_labelsensor"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="80dp"
         android:text="Sensor:"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sw_gps" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_labelupdates" />
 
     <TextView
         android:id="@+id/tv_sensor"
@@ -179,5 +179,53 @@
         android:background="?android:attr/listDivider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_address" />
+
+    <TextView
+        android:id="@+id/labelMarkers"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:text="Tours Visited:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_labelsensor" />
+
+    <TextView
+        android:id="@+id/tv_numMarkers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:text="0"
+        app:layout_constraintStart_toEndOf="@+id/labelMarkers"
+        app:layout_constraintTop_toBottomOf="@+id/tv_sensor" />
+
+    <Button
+        android:id="@+id/btn_CheckIn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="13dp"
+        android:text="Mark tour as visited"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/labelMarkers" />
+
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="409dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="41dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_sensor" />
+
+    <Button
+        android:id="@+id/btn_TourStops"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Show all stops of tour"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_CheckIn" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
