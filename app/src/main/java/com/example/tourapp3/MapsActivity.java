@@ -46,7 +46,7 @@ public class MapsActivity extends AppCompatActivity {
     private ActivityMapsBinding binding;
     TextView tv_lat, tv_lon, tv_altitude, tv_accuracy, tv_speed, tv_sensor, tv_updates, tv_address, tv_numMarkers;
     Switch sw_locationsupdates, sw_gps;
-    Button btn_CheckIn, btn_TourStops;
+    Button btn_CheckIn, btn_TourStops, btn_worldMap;
 
     //If true then gps services are active
     boolean usingGPS = false;
@@ -88,6 +88,7 @@ public class MapsActivity extends AppCompatActivity {
 
         btn_CheckIn = findViewById(R.id.btn_CheckIn);
         btn_TourStops = findViewById(R.id.btn_TourStops);
+        btn_worldMap = findViewById(R.id.btn_worldMap);
 
         sw_gps = findViewById(R.id.sw_gps);
         sw_locationsupdates = findViewById(R.id.sw_locationsupdates);
@@ -133,6 +134,14 @@ public class MapsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent i = new Intent(MapsActivity.this, ShowTourStopsList.class);
+                startActivity(i);
+            }
+        });
+
+        btn_worldMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MapsActivity.this, WorldMapActivity.class);
                 startActivity(i);
             }
         });
