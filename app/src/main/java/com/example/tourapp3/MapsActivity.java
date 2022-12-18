@@ -2,6 +2,7 @@ package com.example.tourapp3;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -54,7 +55,7 @@ public class MapsActivity extends AppCompatActivity {
     Location currentLocation;
 
     // List that contains stops for the tour
-    List<Location> stopsInTour;
+    public List<Location> stopsInTour;
     // 2-D List of all stops in all tours (may not need 2D list, List<Strings> may suffice) [List should be migrated to database to reduce storage usage
     List<List<Location>> allTours;
 
@@ -125,6 +126,14 @@ public class MapsActivity extends AppCompatActivity {
                 stopsInTour = myApplication.getMyLocations();
                 stopsInTour.add(currentLocation);
                 updateGPS();
+            }
+        });
+
+        btn_TourStops.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MapsActivity.this, ShowTourStopsList.class);
+                startActivity(i);
             }
         });
 
@@ -209,8 +218,8 @@ public class MapsActivity extends AppCompatActivity {
     private void updateGPS(){
         fusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(MapsActivity.this);
 
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            //user  already granted permissions
+        //user  already granted permissions
+        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
@@ -219,7 +228,6 @@ public class MapsActivity extends AppCompatActivity {
                     currentLocation = location;
                 }
             });
-        }
         else{
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
                 requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_FINE_LOCATION);
