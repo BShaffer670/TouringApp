@@ -52,7 +52,7 @@ public class MapsActivity extends AppCompatActivity {
     boolean usingGPS = false;
 
     //current location
-    Location currentLocation;
+    public Location currentLocation;
 
     // List that contains stops for the tour
     public List<Location> stopsInTour;
@@ -67,6 +67,8 @@ public class MapsActivity extends AppCompatActivity {
 
     // Google Maps API Stuff
     FusedLocationProviderClient fusedLocationProviderClient;
+
+    MyApplication myApplication;
 
 
     @Override
@@ -86,6 +88,7 @@ public class MapsActivity extends AppCompatActivity {
         tv_address = findViewById(R.id.tv_address);
         tv_numMarkers = findViewById(R.id.tv_numMarkers);
 
+        //CheckIn and TourStops need to be move to tour pop up menu
         btn_CheckIn = findViewById(R.id.btn_CheckIn);
         btn_TourStops = findViewById(R.id.btn_TourStops);
         btn_worldMap = findViewById(R.id.btn_worldMap);
@@ -217,7 +220,7 @@ public class MapsActivity extends AppCompatActivity {
                 updateGPS();
             }
             else{
-                Toast.makeText(this, "This app requires permissionn to use GPS services.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "This app requires permission to use GPS services.", Toast.LENGTH_SHORT).show();
                 finish();
             }
             break;

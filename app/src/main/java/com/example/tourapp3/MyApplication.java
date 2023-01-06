@@ -15,6 +15,11 @@ public class MyApplication extends Application {
         this.myLocations = myLocations;
     }
 
+    public Location getCurrentLocation(){
+        return currentLocation;}
+
+    public void setCurrentLocation(Location location){this.currentLocation = location;}
+
     private static MyApplication singleton;
 
     public MyApplication getInstance() {
@@ -23,9 +28,12 @@ public class MyApplication extends Application {
 
     private List<Location> myLocations;
 
+    private Location currentLocation;
+
     public void onCreate(){
         super.onCreate();
         singleton = this;
         myLocations = new ArrayList<>();
+        //currentLocation = new Location();
     }
 }

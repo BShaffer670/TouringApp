@@ -1,15 +1,19 @@
 package com.example.tourapp3;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import android.location.Location;
 import android.os.Bundle;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.tourapp3.databinding.ActivityWorldMapBinding;
 
@@ -21,9 +25,18 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     private ActivityWorldMapBinding binding;
 
     List<Location> savedLocations;
+
+    Location currentLocation;
+    FusedLocationProviderClient fusedLocationProviderClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Somewhere in this method there should be code that retrieves a list of locations "starting point for tours"
+        //After getting that list of locations, it will need to place markers at the locations place this code in onMapReady
+
+        //currentLocation = fusedLocationProviderClient.getLastLocation().addOnSuccessListener()
 
         binding = ActivityWorldMapBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -46,14 +59,18 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
+        LatLng userLocation = new LatLng(39, 151);
         //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+        LatLng lastLocationPlaced = userLocation;
 
         for (Location location: savedLocations) {
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -61,6 +78,16 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
             markerOptions.position(latLng);
             markerOptions.title("Lat:" + location.getLatitude() + " Lon:" + location.getLongitude());
             mMap.addMarker(markerOptions);
+            lastLocationPlaced = latLng;
         }
+
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastLocationPlaced, 12.0f));
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                return false;
+            }
+        });
     }
 }
