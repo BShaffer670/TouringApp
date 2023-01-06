@@ -27,6 +27,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -97,11 +98,10 @@ public class MapsActivity extends AppCompatActivity {
         sw_locationsupdates = findViewById(R.id.sw_locationsupdates);
 
         //setting properties of locationrequest
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000 * defaultUpdateInterval);
-        locationRequest.setFastestInterval(1000 * fastUpdateInterval);
-
-        locationRequest.setPriority(locationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+                .setWaitForAccurateLocation(false)
+                .setMinUpdateIntervalMillis(5000)
+                .build();
 
         //Event is triggered when the update interval is met
         locationCallback = new LocationCallback() {
@@ -149,23 +149,23 @@ public class MapsActivity extends AppCompatActivity {
             }
         });
 
-        sw_gps.setOnClickListener(new View.OnClickListener() {
+        //sw_gps.setOnClickListener(new View.OnClickListener() {
 
-            @Override
-            public void onClick(View view) {
-
-                //isChecked() looks to see if the switch is on the GUI is active
-                if (sw_gps.isChecked()) {
-                    //use most accurate gps
-                    locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-                    tv_sensor.setText("Using GPS sensors.");
-
-                } else {
-                    locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-                    tv_sensor.setText("Cell Towers + WiFi.");
-                }
-            }
-        });
+//            @Override
+//            public void onClick(View view) {
+//
+//                //isChecked() looks to see if the switch is on the GUI is active
+//                if (sw_gps.isChecked()) {
+//                    //use most accurate gps
+//                    locationRequest.
+//                    tv_sensor.setText("Using GPS sensors.");
+//
+//                } else {
+//                    locationRequest.setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY);
+//                    tv_sensor.setText("Cell Towers + WiFi.");
+//                }
+//            }
+        //});
 
         sw_locationsupdates.setOnClickListener(new View.OnClickListener() {
             @Override
