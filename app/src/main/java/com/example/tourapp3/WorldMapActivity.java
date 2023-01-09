@@ -8,7 +8,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.nfc.Tag;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -24,13 +27,12 @@ import com.example.tourapp3.databinding.ActivityWorldMapBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firestore.v1.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +42,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     private GoogleMap mMap;
     private ActivityWorldMapBinding binding;
 
-    List<Location> savedLocations;
+    List<LatLng> savedLocations;
 
     Location currentLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
@@ -49,6 +51,8 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     CollectionReference collectionReference;
 
     List<String> tourIDs;
+
+    EditText ET_Firestorechecker;
 
     private static final int REQUEST_CODE = 101;
 
@@ -64,18 +68,38 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         binding = ActivityWorldMapBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         MyApplication myApplication = (MyApplication)getApplicationContext();
-        savedLocations = myApplication.getMyLocations();
+        //savedLocations = myApplication.getMyLocations();
+        savedLocations = new ArrayList<>();
 
-
+        ET_Firestorechecker = findViewById(R.id.ET_Firestorechecker);
 
         fusedLocationProviderClient=LocationServices.getFusedLocationProviderClient(this);
         getCurrentLocation();
+
+        db.collection("Tours")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            tourIDs = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                tourIDs.add(document.getId());
+                                Log.d("TAG", document.getId() + " => " + document.getData());
+                            }
+                        } else {
+                            Log.d("TAG", "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
     }
 
     private void getCurrentLocation() {
@@ -116,39 +140,38 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        double uLat = currentLocation.getLatitude();
-        double uLon = currentLocation.getLongitude();
-
-        LatLng userLocation = new LatLng(33, 129);
-        mMap.addMarker(new MarkerOptions().position(userLocation).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
-
-        LatLng lastLocationPlaced = userLocation;
-
-//        db.collection("Tours").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                if(task.isSuccessful()){
-//                    tourIDs = new ArrayList<>();
-//                    for(QueryDocumentSnapshot doc : task.getResult()){
-//                        tourIDs.add(doc.getId().toString());
-//                    }
-//                }
-//            }
-//
-//        });
+        //double uLat = currentLocation.getLatitude();
+        //double uLon = currentLocation.getLongitude();
 
 
-        for (Location location: savedLocations) {
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(latLng);
-            markerOptions.title("Lat:" + location.getLatitude() + " Lon:" + location.getLongitude());
-            mMap.addMarker(markerOptions);
-            lastLocationPlaced = latLng;
+
+        if(tourIDs != null) {
+            for (String ID : tourIDs) {
+                db.collection("Tours").document(ID).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        double _Lat = (double) documentSnapshot.get("Lat");
+                        double _Lon = (double) documentSnapshot.get("Lon");
+
+                        LatLng latLng = makeLatLng(_Lat, _Lon);
+                        savedLocations.add(latLng);
+                        for (LatLng location: savedLocations) {
+                            MarkerOptions markerOptions = new MarkerOptions();
+                            markerOptions.position(location);
+                            markerOptions.title("Lat:" + location.latitude + " Lon:" + location.longitude);
+                            mMap.addMarker(markerOptions);
+                            //lastLocationPlaced = latLng;
+                        }
+                    }
+                });
+            }
+
         }
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 12.0f));
+
+
+
+        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 12.0f));
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -157,6 +180,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
             }
         });
     }
+
 
     public LatLng makeLatLng(double lat, double lon){
         LatLng latlng = new LatLng(lat,lon);
