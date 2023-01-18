@@ -9,7 +9,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.LocaleList;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Switch;
@@ -19,7 +19,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
 
 import com.example.tourapp3.databinding.ActivityMapsBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -28,15 +27,23 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MapsActivity extends AppCompatActivity {
     public static final int defaultUpdateInterval = 30;
@@ -60,6 +67,11 @@ public class MapsActivity extends AppCompatActivity {
     // 2-D List of all stops in all tours (may not need 2D list, List<Strings> may suffice) [List should be migrated to database to reduce storage usage
     List<List<Location>> allTours;
 
+    DocumentReference documentReference;
+
+    List<String> tourIDs;
+
+    FirebaseFirestore firestore;
 
     //config file for all FusedLocationProviderClient settings
     LocationRequest locationRequest;
@@ -71,11 +83,16 @@ public class MapsActivity extends AppCompatActivity {
 
     MyApplication myApplication;
 
+    List<LatLng> savedLocations;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        Intent i = new Intent(MapsActivity.this, WorldMapActivity.class);
+        startActivity(i);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 
@@ -96,6 +113,62 @@ public class MapsActivity extends AppCompatActivity {
 
         sw_gps = findViewById(R.id.sw_gps);
         sw_locationsupdates = findViewById(R.id.sw_locationsupdates);
+
+        savedLocations = new ArrayList<LatLng>();
+
+        firestore = FirebaseFirestore.getInstance();
+
+        firestore.collection("Tours")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//                        double _Lat = (double) ("Lat");
+//                        double _Lon = (double) tas.get("Lon");
+
+                        if (task.isSuccessful()) {
+                           tourIDs = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                tourIDs.add(document.getId());
+                                Log.d("TAG", document.getId() + " => " + document.getData());
+                            }
+                        } else {
+                            Log.d("TAG", "Error getting documents: ", task.getException());
+                        }
+//                        LatLng latLng = new LatLng();
+//                        savedLocations.add(latLng);
+//                        Log.d("TAG","Line of code after list add");
+//                        if(savedLocations.size() != 0) {
+//                            for (LatLng location : savedLocations) {
+//                                mMap.addMarker(new MarkerOptions().position(location));
+//                                Log.d("TAG","Line of code after marker add");
+//
+//                                //lastLocationPlaced = latLng;
+//                            }
+//                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(savedLocations.get(0), 12.0f));
+//                        }
+                        if(tourIDs != null) {
+                            for (String ID : tourIDs) {
+                                firestore.collection("Tours").document(ID).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                    @Override
+                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                        double _Lat = (double) documentSnapshot.get("Lat");
+                                        double _Lon = (double) documentSnapshot.get("Lon");
+
+                                        LatLng latLng = new LatLng(_Lat, _Lon);
+                                        savedLocations.add(latLng);
+                                        Log.d("TAG","Line of code after list add");
+
+                                    }
+                                });
+                            }
+
+                        }
+                    }
+
+                });
+
+
 
         //setting properties of locationrequest
         locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
@@ -128,8 +201,25 @@ public class MapsActivity extends AppCompatActivity {
                 // adds a marker to the global list( Needs to be changed to change color of tour marker
                 MyApplication myApplication = (MyApplication)getApplicationContext();
                 stopsInTour = myApplication.getMyLocations();
-                stopsInTour.add(currentLocation);
-                updateGPS();
+
+                Map<String, Object> testLocation = new HashMap<>();
+
+                testLocation.put("Lat", currentLocation.getLatitude());
+                testLocation.put("Lon", currentLocation.getLongitude());
+
+                GeoPoint geoPoint = new GeoPoint(currentLocation.getLatitude(),currentLocation.getLongitude());
+                documentReference = firestore.collection("Tours").document("test");
+                CollectionReference collectionReference = firestore.collection("Tours");
+                //collectionReference.add()
+//                documentReference.update("Lat",currentLocation.getLatitude());
+//                documentReference.update("Lon",currentLocation.getLongitude());
+                documentReference.update(testLocation).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+
+                    }
+                });
+            updateGPS();
             }
         });
 

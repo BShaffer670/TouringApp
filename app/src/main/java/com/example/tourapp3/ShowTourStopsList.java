@@ -21,8 +21,8 @@ public class ShowTourStopsList extends AppCompatActivity {
         lv_savedLocations = findViewById((R.id.lv_waypoints));
 
         MyApplication myApplication = (MyApplication)getApplicationContext();
-        List<Location> saveLocation = myApplication.getMyLocations();
+        //List<Location> saveLocation = myApplication.getMyLocations();
 
-        lv_savedLocations.setAdapter(new ArrayAdapter<Location>(this, android.R.layout.simple_list_item_1, saveLocation));
+        //lv_savedLocations.setAdapter(new ArrayAdapter<Location>(this, android.R.layout.simple_list_item_1, saveLocation));
     }
 }
