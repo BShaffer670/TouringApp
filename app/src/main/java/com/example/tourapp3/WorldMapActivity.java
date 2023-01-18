@@ -43,6 +43,8 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     CollectionReference collectionReference;
 
+    MyApplication myApplication;
+
     List<String> tourIDs;
 
     EditText ET_Firestorechecker;
@@ -68,7 +70,6 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        MyApplication myApplication = (MyApplication)getApplicationContext();
         //savedLocations = myApplication.getMyLocations();
 
 
@@ -164,11 +165,12 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 //
 //        }
 
-        MyApplication myApplication = new MyApplication();
 
+
+        myApplication = (MyApplication)getApplicationContext();
         savedLocations = myApplication.getMyLocations();
         if(savedLocations != null) {
-            for (Location location : savedLocations) {
+             for (Location location : savedLocations) {
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(latLng));
                 Log.d("TAG", "Line of code after marker add");

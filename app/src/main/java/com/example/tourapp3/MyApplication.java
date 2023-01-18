@@ -31,10 +31,13 @@ public class MyApplication extends Application {
         this.myLocations = myLocations;
     }
 
-    public Location getCurrentLocation(){
-        return currentLocation;}
+    public Location getCurrentLocation() {
+        return currentLocation;
+    }
 
-    public void setCurrentLocation(Location location){this.currentLocation = location;}
+    public void setCurrentLocation(Location location) {
+        this.currentLocation = location;
+    }
 
     public MyApplication getInstance() {
         return singleton;
@@ -42,49 +45,86 @@ public class MyApplication extends Application {
 
     private Location currentLocation;
 
-    public void onCreate(){
+    public void onCreate() {
         super.onCreate();
         singleton = this;
         myLocations = new ArrayList<>();
 
-        List<String>TourIDS = new ArrayList<>();
+        List<String> TourIDS = new ArrayList<>();
 
         //currentLocation = new Location();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        db.collection("Tours").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        db.collection("Tours").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if(task.isSuccessful()) {
-                    for (QueryDocumentSnapshot doc:task.getResult())
-                    {
-                        TourIDS.add(doc.getId().toString());
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        TourIDS.add(doc.getId());
                     }
+
+                if(TourIDS != null) {
+                    //for (String id: TourIDS) {
+                        List<DocumentSnapshot> documents = queryDocumentSnapshots.getDocuments();
+                        for (DocumentSnapshot docSnap:documents) {
+                            double _lat = docSnap.getDouble("Lat");
+                            double _lon = docSnap.getDouble("Lon");
+
+                            //LatLng latLng = new LatLng();
+                            Location location = new Location("Marker");
+                            location.setLatitude(_lat);
+                            location.setLongitude(_lon);
+
+                            myLocations.add(location);
+                        }
+
+//                        db.document(id).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+//                            @Override
+//                            public void onSuccess(DocumentSnapshot documentSnapshot) {
+//                                double _lat = (double) documentSnapshot.get("Lat");
+//                                double _lon = (double) documentSnapshot.get("Lon");
+//
+//                                //LatLng latLng = new LatLng();
+//                                Location location = new Location("Marker");
+//                                location.setLatitude(_lat);
+//                                location.setLongitude(_lon);
+//
+//                                myLocations.add(location);
+//                            }
+//                        });
+                    //}
                 }
             }
         });
+//        {
+//            @Override
+//            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//
+//            }
+//
+//        });
 
-        if(TourIDS != null){
-            for (String id:TourIDS)
-            {
-                db.collection("Tours").document(id).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        double _lat = (double) documentSnapshot.get("Lat");
-                        double _lon = (double) documentSnapshot.get("Lon");
+//        if (TourIDS != null) {
+//            for (String id : TourIDS) {
+//                db.collection("Tours").document(id).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+//                    @Override
+//                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+//                        double _lat = (double) documentSnapshot.get("Lat");
+//                        double _lon = (double) documentSnapshot.get("Lon");
+//
+//                        //LatLng latLng = new LatLng();
+//                        Location location = new Location("Marker");
+//                        location.setLatitude(_lat);
+//                        location.setLongitude(_lon);
+//
+//                        myLocations.add(location);
+//                    }
+//
+//                });
+//            }
+//        }
 
-                        //LatLng latLng = new LatLng();
-                        Location location = new Location("Marker");
-                        location.setLatitude(_lat);
-                        location.setLongitude(_lon);
-
-                        myLocations.add(location);
-                    }
-
-                });
-            }
-        }
     }
+
 }
 
 
