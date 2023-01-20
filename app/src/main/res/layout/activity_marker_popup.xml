@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/MarkerPopup"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#62def8">
+
+    <Button
+        android:id="@+id/startTour"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="62dp"
+        android:text="Start Tour" />
+
+    <Button
+        android:id="@+id/visitWebsite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="49dp"
+        android:layout_marginTop="62dp"
+        android:layout_toEndOf="@+id/startTour"
+        android:text="Visit Website" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="318dp"
+        android:layout_height="wrap_content"
+        android:text="Full Sail University Test Tour"
+        android:textAlignment="center"
+        android:textSize="24sp" />
+
+</RelativeLayout>
