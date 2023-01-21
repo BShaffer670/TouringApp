@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -83,7 +84,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         //savedLocations = myApplication.getMyLocations();
 
 
-        ET_Firestorechecker = findViewById(R.id.ET_Firestorechecker);
+        //ET_Firestorechecker = findViewById(R.id.ET_Firestorechecker);
 
         fusedLocationProviderClient=LocationServices.getFusedLocationProviderClient(this);
         getCurrentLocation();
@@ -176,19 +177,26 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 //        }
 
 
-
         myApplication = (MyApplication)getApplicationContext();
-        savedLocations = myApplication.getMyLocations();
-        if(savedLocations != null) {
-             for (Location location : savedLocations) {
-                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(latLng));
-                Log.d("TAG", "Line of code after marker add");
+        Handler handler = new Handler();
 
-                //lastLocationPlaced = latLng;
+
+        Runnable refresh = new Runnable() {
+            public void run() {
+                // Do something
+                savedLocations = myApplication.getMyLocations();
+                if(savedLocations != null) {
+                    for (Location location : myApplication.getMyLocations()) {
+                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        mMap.addMarker(new MarkerOptions().position(latLng));
+                        Log.d("TAG", "Line of code after marker add");
+                    }
+                }
+                handler.postDelayed(this, 5000);
             }
+        };
+        handler.post(refresh);
 
-        }
 
         //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 12.0f));
 
@@ -208,18 +216,21 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         View popupView = inflater.inflate(R.layout.activity_marker_popup, null);
 
         startTour = findViewById(R.id.startTour);
-        startTour.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-            }
-        });
 
         // create the popup window
         int width = LinearLayout.LayoutParams.WRAP_CONTENT;
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
         boolean focusable = true; // lets taps outside the popup also dismiss it
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+//        startTour.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//                popupWindow.dismiss();
+//            }
+//        });
 
         // show the popup window
         // which view you pass in doesn't matter, it is only used for the window tolken
@@ -229,8 +240,18 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         popupView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                popupWindow.dismiss();
+                //popupWindow.dismiss();
                 return true;
+            }
+        });
+
+        startTour.setOnTouchListener(new View.OnTouchListener(){
+
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+
+
+                return false;
             }
         });
     }
