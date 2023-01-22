@@ -45,9 +45,9 @@
             android:value="${MAPS_API_KEY}" />
 
         <activity
-            android:name=".WorldMapActivity"
+            android:name=".MapsActivity"
             android:exported="false"
-            android:label="@string/title_activity_world_map" />
+            android:label="MapsActivity" />
         <activity
             android:name=".ShowTourStopsList"
             android:exported="false">
@@ -56,9 +56,9 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".MapsActivity"
+            android:name=".WorldMapActivity"
             android:exported="true"
-            android:label="@string/title_activity_maps"
+            android:label="WorldMapActivity"
             tools:ignore="MissingClass">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

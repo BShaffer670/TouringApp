@@ -48,7 +48,7 @@ import java.util.Map;
 public class MapsActivity extends AppCompatActivity {
     public static final int defaultUpdateInterval = 30;
     public static final int fastUpdateInterval = 5;
-    private static final int PERMISSIONS_FINE_LOCATION = 99;
+    static final int PERMISSIONS_FINE_LOCATION = 99;
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
@@ -91,8 +91,8 @@ public class MapsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        Intent i = new Intent(MapsActivity.this, WorldMapActivity.class);
-        startActivity(i);
+//        Intent i = new Intent(MapsActivity.this, WorldMapActivity.class);
+//        startActivity(i);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 
@@ -118,55 +118,55 @@ public class MapsActivity extends AppCompatActivity {
 
         firestore = FirebaseFirestore.getInstance();
 
-        firestore.collection("Tours")
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                        double _Lat = (double) ("Lat");
-//                        double _Lon = (double) tas.get("Lon");
-
-                        if (task.isSuccessful()) {
-                           tourIDs = new ArrayList<>();
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                tourIDs.add(document.getId());
-                                Log.d("TAG", document.getId() + " => " + document.getData());
-                            }
-                        } else {
-                            Log.d("TAG", "Error getting documents: ", task.getException());
-                        }
-//                        LatLng latLng = new LatLng();
-//                        savedLocations.add(latLng);
-//                        Log.d("TAG","Line of code after list add");
-//                        if(savedLocations.size() != 0) {
-//                            for (LatLng location : savedLocations) {
-//                                mMap.addMarker(new MarkerOptions().position(location));
-//                                Log.d("TAG","Line of code after marker add");
+//        firestore.collection("Tours")
+//                .get()
+//                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+//                    @Override
+//                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+////                        double _Lat = (double) ("Lat");
+////                        double _Lon = (double) tas.get("Lon");
 //
-//                                //lastLocationPlaced = latLng;
+//                        if (task.isSuccessful()) {
+//                           tourIDs = new ArrayList<>();
+//                            for (QueryDocumentSnapshot document : task.getResult()) {
+//                                tourIDs.add(document.getId());
+//                                Log.d("TAG", document.getId() + " => " + document.getData());
 //                            }
-//                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(savedLocations.get(0), 12.0f));
+//                        } else {
+//                            Log.d("TAG", "Error getting documents: ", task.getException());
 //                        }
-                        if(tourIDs != null) {
-                            for (String ID : tourIDs) {
-                                firestore.collection("Tours").document(ID).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                                    @Override
-                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                        double _Lat = (double) documentSnapshot.get("Lat");
-                                        double _Lon = (double) documentSnapshot.get("Lon");
-
-                                        LatLng latLng = new LatLng(_Lat, _Lon);
-                                        savedLocations.add(latLng);
-                                        Log.d("TAG","Line of code after list add");
-
-                                    }
-                                });
-                            }
-
-                        }
-                    }
-
-                });
+////                        LatLng latLng = new LatLng();
+////                        savedLocations.add(latLng);
+////                        Log.d("TAG","Line of code after list add");
+////                        if(savedLocations.size() != 0) {
+////                            for (LatLng location : savedLocations) {
+////                                mMap.addMarker(new MarkerOptions().position(location));
+////                                Log.d("TAG","Line of code after marker add");
+////
+////                                //lastLocationPlaced = latLng;
+////                            }
+////                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(savedLocations.get(0), 12.0f));
+////                        }
+//                        if(tourIDs != null) {
+//                            for (String ID : tourIDs) {
+//                                firestore.collection("Tours").document(ID).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+//                                    @Override
+//                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+//                                        double _Lat = (double) documentSnapshot.get("Lat");
+//                                        double _Lon = (double) documentSnapshot.get("Lon");
+//
+//                                        LatLng latLng = new LatLng(_Lat, _Lon);
+//                                        savedLocations.add(latLng);
+//                                        Log.d("TAG","Line of code after list add");
+//
+//                                    }
+//                                });
+//                            }
+//
+//                        }
+//                    }
+//
+//                });
 
 
 
