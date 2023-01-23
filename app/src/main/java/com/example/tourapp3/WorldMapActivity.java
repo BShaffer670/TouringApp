@@ -11,6 +11,8 @@ import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,18 +32,26 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.tourapp3.databinding.ActivityWorldMapBinding;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +68,10 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     Boolean inTour;
     List<Location> savedLocations;
 
+    private String currentTourId;
+
+    List<LatLng> stopsInTour;
+
     LocationRequest locationRequest;
 
     LocationCallback locationCallback;
@@ -70,7 +84,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 
     MyApplication myApplication;
 
-    List<String> tourIDs;
+    String tourIDs;
 
     EditText ET_Firestorechecker;
 
@@ -83,10 +97,21 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         super.onCreate(savedInstanceState);
         inTour = false;
 
+
         //Somewhere in this method there should be code that retrieves a list of locations "starting point for tours"
         //After getting that list of locations, it will need to place markers at the locations place this code in onMapReady
 
         //currentLocation = fusedLocationProviderClient.getLastLocation().addOnSuccessListener()
+
+        //tourIDs = new ArrayList<>();
+        db.collection("Tours").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                    tourIDs = doc.getId();
+                }
+            }
+        });
 
         binding = ActivityWorldMapBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -111,7 +136,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 //            }
 //        });
 
-        fusedLocationProviderClient=LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationProviderClient=LocationServices.getFusedLocationProviderClient(WorldMapActivity.this);
         getCurrentLocation();
 
 //        db.collection("Tours")
@@ -144,7 +169,6 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
             @Override
             public void onSuccess(Location location) {
                 if (location != null) {
-                    currentLocation = new Location(location);
                     Toast.makeText(getApplicationContext(), location.getLatitude() + "" + location.getLongitude(), Toast.LENGTH_SHORT).show();
                     SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
                     assert supportMapFragment != null;
@@ -209,17 +233,31 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         Runnable refresh = new Runnable() {
             public void run() {
                 // Do something
-                mMap.clear();
-                savedLocations = myApplication.getMyLocations();
-                if(savedLocations != null) {
-                    for (Location location : myApplication.getMyLocations()) {
-                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                        mMap.addMarker(new MarkerOptions().position(latLng));
-                        Log.d("TAG", "Line of code after marker add");
+                updateGPS();
+                if(inTour != true) {
+                    mMap.clear();
+                    savedLocations = myApplication.getMyLocations();
+                    if (savedLocations != null) {
+                        for (Location location : myApplication.getMyLocations()) {
+                            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                            mMap.addMarker(new MarkerOptions().position(latLng));
+                            Log.d("TAG", "Line of code after marker add");
+                        }
                     }
+
+                }
+
+                BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_user);
+
+                if(currentLocation != null) {
+                    LatLng lng = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+//                    mMap.addMarker(new MarkerOptions().position(lng).title("User")
+//                            .icon(Bit));
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(lng).title("User").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lng, 12.0f));
                 }
                 handler.postDelayed(this, 5000);
-
             }
         };
         handler.post(refresh);
@@ -230,8 +268,11 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
-                openPopUpWindow();
+                if(marker.getTitle() != "User") {
+                    //currentTourId = db.collection("Tours").;
+                    openPopUpWindow();
 
+                }
                 return true;
             }
         });
@@ -281,8 +322,35 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     public void StartTour(){
-        inTour = true;
+        int stopsCounter = 0;
 
+        inTour = true;
+        stopsInTour = new ArrayList<>();
+
+        db.collection("Tours").document(tourIDs).collection("Stops").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                for (DocumentSnapshot documentSnapshot: task.getResult()) {
+                    LatLng latLng = new LatLng(documentSnapshot.getDouble("Lat"), documentSnapshot.getDouble("Lon"));
+                    stopsInTour.add(latLng);
+                }
+                TourHandler();
+            }
+
+        });
+
+        //stopsCounter = db.collection("Tours").document(currentTourId);
+
+    }
+
+    private void TourHandler() {
+        while (inTour) {
+            mMap.clear();
+            for (LatLng lng:stopsInTour){
+                mMap.addMarker(new MarkerOptions().position(lng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+            }
+            break;
+        }
     }
 
     public void EndTour(){
@@ -330,7 +398,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    currentLocation = location;
+                    currentLocation = new Location(location);
                 }
             });
         else{
