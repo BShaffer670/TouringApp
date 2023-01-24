@@ -14,6 +14,8 @@ import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,7 +54,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,7 +93,9 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 
     EditText ET_Firestorechecker;
 
-    Button startTour;
+    Button startTour, website;
+
+    FirebaseStorage storageRef;
 
     private static final int REQUEST_CODE = 101;
 
@@ -97,6 +104,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         super.onCreate(savedInstanceState);
         inTour = false;
 
+        storageRef = FirebaseStorage.getInstance();
 
         //Somewhere in this method there should be code that retrieves a list of locations "starting point for tours"
         //After getting that list of locations, it will need to place markers at the locations place this code in onMapReady
@@ -137,7 +145,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 //        });
 
         fusedLocationProviderClient=LocationServices.getFusedLocationProviderClient(WorldMapActivity.this);
-        getCurrentLocation();
+        //getCurrentLocation();
 
 //        db.collection("Tours")
 //                .get()
@@ -157,26 +165,26 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 //                });
     }
 
-    private void getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
-            return;
-        }
-        @SuppressLint("MissingPermission") Task<Location> task = fusedLocationProviderClient.getLastLocation();
-        task.addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
-                    Toast.makeText(getApplicationContext(), location.getLatitude() + "" + location.getLongitude(), Toast.LENGTH_SHORT).show();
-                    SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-                    assert supportMapFragment != null;
-                    supportMapFragment.getMapAsync(WorldMapActivity.this);
-                }
-            }
-        });
-    }
+//    private void getCurrentLocation() {
+//        if (ActivityCompat.checkSelfPermission(
+//                this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+//                this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
+//            return;
+//        }
+//        @SuppressLint("MissingPermission") Task<Location> task = fusedLocationProviderClient.getLastLocation();
+//        task.addOnSuccessListener(new OnSuccessListener<Location>() {
+//            @Override
+//            public void onSuccess(Location location) {
+//                if (location != null) {
+//                    Toast.makeText(getApplicationContext(), location.getLatitude() + "" + location.getLongitude(), Toast.LENGTH_SHORT).show();
+//                    SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+//                    assert supportMapFragment != null;
+//                    supportMapFragment.getMapAsync(WorldMapActivity.this);
+//                }
+//            }
+//        });
+//    }
 
     /**
      * Manipulates the map once available.
@@ -284,6 +292,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         View popupView = inflater.inflate(R.layout.activity_marker_popup, null);
 
         startTour = popupView.findViewById(R.id.startTour);
+        website = popupView.findViewById(R.id.visitWebsite);
 
         // create the popup window
         int width = LinearLayout.LayoutParams.WRAP_CONTENT;
@@ -294,11 +303,27 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         startTour.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                StartTour();
                 popupWindow.dismiss();
+                StartTour();
             }
         });
 
+        website.setOnClickListener(new View.OnClickListener() {
+            String url;
+            @Override
+            public void onClick(View view) {
+                popupWindow.dismiss();
+                db.collection("Tours").document(tourIDs).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        url = documentSnapshot.get("Website").toString();
+                        Intent launchBrowser = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(launchBrowser);
+                    }
+
+                });
+            }
+        });
         // show the popup window
         // which view you pass in doesn't matter, it is only used for the window tolken
         popupWindow.showAtLocation(popupView, Gravity.CENTER, 0, 0);
@@ -344,12 +369,31 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     private void TourHandler() {
+        MediaPlayer mediaPlayer = new MediaPlayer();
+
+        StorageReference ref = storageRef.getReference().child("Full Sail Tour Audios");
+        ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                String url = uri.toString();
+
+            }
+        });
+
         while (inTour) {
             mMap.clear();
             for (LatLng lng:stopsInTour){
                 mMap.addMarker(new MarkerOptions().position(lng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
             }
             break;
+//            storageRef.getReference().child("songs/song1.mp3").downloadUrl.addOnSuccessListener({
+//                    val mediaPlayer = MediaPlayer()
+//                    mediaPlayer.setDataSource(it.toString())
+//                    mediaPlayer.setOnPreparedListener { player ->
+//                    player.start()
+//            }
+//                    mediaPlayer.prepareAsync()
+//            })
         }
     }
 
