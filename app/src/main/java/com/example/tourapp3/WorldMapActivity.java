@@ -4,6 +4,7 @@ import static com.example.tourapp3.MapsActivity.PERMISSIONS_FINE_LOCATION;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NavUtils;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
@@ -12,6 +13,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.media.MediaPlayer;
@@ -45,6 +47,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.tourapp3.databinding.ActivityWorldMapBinding;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -103,6 +106,8 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         inTour = false;
+
+
 
         storageRef = FirebaseStorage.getInstance();
 
@@ -263,7 +268,7 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 //                            .icon(Bit));
                     Marker marker = mMap.addMarker(new MarkerOptions().position(lng).title("User").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lng, 12.0f));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lng, 16.0f));
                 }
                 handler.postDelayed(this, 5000);
             }
@@ -293,6 +298,9 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 
         startTour = popupView.findViewById(R.id.startTour);
         website = popupView.findViewById(R.id.visitWebsite);
+
+        if(inTour == true)
+            startTour.setText("Stop Tour");
 
         // create the popup window
         int width = LinearLayout.LayoutParams.WRAP_CONTENT;
@@ -347,23 +355,38 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     public void StartTour(){
+        final MediaPlayer[] mediaPlayer = {new MediaPlayer()};
         int stopsCounter = 0;
 
-        inTour = true;
+        inTour = !inTour;
         stopsInTour = new ArrayList<>();
 
-        db.collection("Tours").document(tourIDs).collection("Stops").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                for (DocumentSnapshot documentSnapshot: task.getResult()) {
-                    LatLng latLng = new LatLng(documentSnapshot.getDouble("Lat"), documentSnapshot.getDouble("Lon"));
-                    stopsInTour.add(latLng);
+        if(inTour == true) {
+            db.collection("Tours").document(tourIDs).collection("Stops").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    for (DocumentSnapshot documentSnapshot : task.getResult()) {
+                        LatLng latLng = new LatLng(documentSnapshot.getDouble("Lat"), documentSnapshot.getDouble("Lon"));
+                        stopsInTour.add(latLng);
+                    }
+
+
+//                    storageRef.getReference().child("songs/song1.mp3").downloadUrl.addOnSuccessListener({
+//                    mediaPlayer[0] = new MediaPlayer();
+//                    mediaPlayer[0].setDataSource(it.toString());
+//                    mediaPlayer[0].setOnPreparedListener {player ->
+//                    player.start()
+//            }
+//                    mediaPlayer[0].prepareAsync()
+//            })
+                    TourHandler();
+
+
+
                 }
-                TourHandler();
-            }
 
-        });
-
+            });
+        }
         //stopsCounter = db.collection("Tours").document(currentTourId);
 
     }
@@ -382,9 +405,16 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
 
         while (inTour) {
             mMap.clear();
+            PolylineOptions tourLine = new PolylineOptions();
             for (LatLng lng:stopsInTour){
                 mMap.addMarker(new MarkerOptions().position(lng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
             }
+            tourLine.addAll(stopsInTour);
+            tourLine.width(12);
+            tourLine.color(Color.RED);
+            tourLine.geodesic(true);
+
+            mMap.addPolyline(tourLine);
             break;
 //            storageRef.getReference().child("songs/song1.mp3").downloadUrl.addOnSuccessListener({
 //                    val mediaPlayer = MediaPlayer()
@@ -452,4 +482,6 @@ public class WorldMapActivity extends FragmentActivity implements OnMapReadyCall
         }
 
     }
+
+
 }
